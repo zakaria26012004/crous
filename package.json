@@ -1,0 +1,13 @@
+{
+  "name": "crous-watcher",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Surveille la disponibilité de logements CROUS et envoie une notification push dès qu'un logement correspond aux critères.",
+  "scripts": {
+    "watch": "node watch.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
