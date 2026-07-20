@@ -31,7 +31,7 @@ function saveState(state) {
   writeFileSync(STATE_FILE, JSON.stringify(state, null, 2) + "\n");
 }
 
-async function fetchListings() {
+async function fetchListingsOnce() {
   const body = {
     idTool: TOOL_ID,
     need_aggregation: false,
@@ -50,6 +50,7 @@ async function fetchListings() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000),
     },
   );
 
@@ -59,6 +60,21 @@ async function fetchListings() {
 
   const data = await res.json();
   return data.results.items;
+}
+
+// Le site CROUS a occasionnellement des erreurs/timeouts transitoires ;
+// on retente quelques fois avant d'abandonner pour éviter un run rouge
+// à chaque blip réseau isolé.
+async function fetchListings(retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fetchListingsOnce();
+    } catch (err) {
+      if (attempt === retries) throw err;
+      console.warn(`Tentative ${attempt}/${retries} échouée (${err.message}), nouvel essai...`);
+      await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+    }
+  }
 }
 
 async function notify(item) {
